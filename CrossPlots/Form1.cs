@@ -92,21 +92,21 @@ namespace CrossPlots
             init_x = (plotView.Model as PlotModel)?.Axes[0].InverseTransform(e.X) ?? 0;
             init_y = (plotView.Model as PlotModel)?.Axes[1].InverseTransform(e.Y) ?? 0;
 
-            var ellipse = IsMouseInsideEllipseAnnotation(init_x, init_y);
-            if (ellipse != null && e.Button == MouseButtons.Right)
+            var found_ellipse = IsMouseInsideEllipseAnnotation(init_x, init_y);
+            if (found_ellipse != null && e.Button == MouseButtons.Right)
             {
-                DestroyEllipse(ellipse);
+                DestroyAnnotation(found_ellipse);
             }
 
-            if (ellipse != null && e.Button == MouseButtons.Left)
+            if (found_ellipse != null && e.Button == MouseButtons.Left)
             {
-                CreateRectangleAroundEllipse(ellipse);
+                CreateRectangleAroundEllipse(found_ellipse);
                 return;
             }
 
             if (Control.ModifierKeys == Keys.Control)
             {
-                if (ellipse == null)
+                if (found_ellipse == null)
                 {
                     // Create a new ellipse annotation
                     ellipseAnnotation = new EllipseAnnotation
@@ -121,7 +121,7 @@ namespace CrossPlots
                     };
 
                     // Add the ellipse annotation to the plot model
-                    (plotView.Model as PlotModel)?.Annotations.Add(ellipseAnnotation);
+                    (plotView.Model)?.Annotations.Add(ellipseAnnotation);
                     ellipse_wrappers.Add(new Ellipse_Wrapper(ellipseAnnotation));
 
                     plotView.InvalidatePlot(true);  // refresh
@@ -133,27 +133,22 @@ namespace CrossPlots
             }
         }
 
-        // TODO: refactor to use ellipse_wrappers instead of all annotations
         private EllipseAnnotation IsMouseInsideEllipseAnnotation(double x, double y)
         {
-            var model = plotView.Model as PlotModel;
+            var model = plotView.Model;
 
-            if (model != null)
+            foreach (var wrapper in ellipse_wrappers)
             {
-                foreach (var annotation in model.Annotations)
+                var ellipse = wrapper.ellipse;
+                if (x >= ellipse.X - ellipse.Width / 2 &&
+                    x <= ellipse.X + ellipse.Width / 2 &&
+                    y >= ellipse.Y - ellipse.Height / 2 &&
+                    y <= ellipse.Y + ellipse.Height / 2)
                 {
-                    if (annotation is EllipseAnnotation ellipseAnnotation)
-                    {
-                        if (x >= ellipseAnnotation.X - ellipseAnnotation.Width / 2 &&
-                            x <= ellipseAnnotation.X + ellipseAnnotation.Width / 2 &&
-                            y >= ellipseAnnotation.Y - ellipseAnnotation.Height / 2 &&
-                            y <= ellipseAnnotation.Y + ellipseAnnotation.Height / 2)
-                        {
-                            return ellipseAnnotation;
-                        }
-                    }
+                    return ellipse;
                 }
             }
+
             return null;
         }
 
@@ -185,21 +180,39 @@ namespace CrossPlots
                 if (ellipse_wrapper.ellipse == ellipse)
                 {
                     ellipse_wrapper.rectangle = rectangle;
+                    return;
                 }
+
             }
 
         }
 
         private void EditEllipse() { }
 
-        private void DestroyEllipse(EllipseAnnotation ellipse)
+        private void DestroyAnnotation(EllipseAnnotation ellipse)
         {
-            Console.Write("WORKING");
+            var model = plotView.Model;
+
+            foreach (var wrapper in ellipse_wrappers)
+            {
+                if (wrapper.ellipse == ellipse)
+                {
+                    model.Annotations.Remove(wrapper.ellipse);
+                    if (wrapper.rectangle != null)
+                    {
+                        model.Annotations.Remove(wrapper.rectangle);
+                    }
+                    ellipse_wrappers.Remove(wrapper);
+
+                    plotView.InvalidatePlot(true);
+
+                    return;
+                }
+            }
         }
 
         private void PlotView_MouseMove(object sender, MouseEventArgs e)
         {
-
             if (Control.ModifierKeys == Keys.Control)
             {
                 if (ellipseAnnotation != null)
