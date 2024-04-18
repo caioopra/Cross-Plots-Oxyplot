@@ -98,22 +98,29 @@ namespace CrossPlots
                 return;
             }
 
-            if (found_ellipse != null && e.Button == MouseButtons.Left)
-            {
-                if (lastSelectedEllipseWrapper != null)
-                {
-                    DestroyRectangleAnnotation();
-                }
-                CreateRectangleAroundEllipse(found_ellipse);
-                return;
-            }
-
+            // must be holding "CRTL" key to create / edit an ellipse
             if (ModifierKeys == Keys.Control)
             {
                 if (found_ellipse == null)
                 {
                     CreateEllipse(init_x, init_y);
                 }
+            }
+
+            if (found_ellipse != null && e.Button == MouseButtons.Left)
+            {
+                // no ellipse selected
+                if (lastSelectedEllipseWrapper == null)
+                {
+                    DestroyRectangleAnnotation();
+                    CreateRectangleAroundEllipse(found_ellipse);
+                }
+                // selecting a different ellipse than the one currently selected
+                else if (lastSelectedEllipseWrapper != null && found_ellipse != lastSelectedEllipseWrapper.ellipse)
+                {
+                    CreateRectangleAroundEllipse(found_ellipse);
+                }
+                // by selecting the same ellipse again, allows for edition
                 else
                 {
                     EditEllipse();
