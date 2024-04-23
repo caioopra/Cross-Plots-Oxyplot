@@ -6,6 +6,8 @@ namespace CrossPlots
     {
         public EllipseAnnotation ellipse;
         public RectangleAnnotation rectangle;
+        public PointAnnotation[] edgeAnchors;   // Top, Right, Bottom, Left
+        public PointAnnotation[] cornerAnchors; // TR, BR, BL, TL
 
         public Ellipse_Wrapper(EllipseAnnotation ellipse, RectangleAnnotation rectangle = null)
         {

@@ -16,9 +16,8 @@ namespace CrossPlots
         private EllipseAnnotation ellipseAnnotation;
         private ScatterSeries scatterSeries;
         private List<ScatterPoint> scatterSource = new List<ScatterPoint>();
-        private List<Ellipse_Wrapper> ellipse_wrappers = new List<Ellipse_Wrapper>();
 
-        private Ellipse_Wrapper lastSelectedEllipseWrapper = null;
+        private Ellipse_Wrapper ellipse_wrapper;
 
         Random rnd = new Random();
 
@@ -70,17 +69,17 @@ namespace CrossPlots
             // Refresh the plot view
             plotView.InvalidatePlot(true);
 
-            ellipseAnnotation = new EllipseAnnotation
+            // TEST
+            var teste = new PointAnnotation
             {
-                X = 10,
-                Y = 10,
-                Width = 15,
-                Height = 15,
-                Fill = OxyColor.FromAColor(10, OxyColors.Blue),
-                Stroke = OxyColors.Black,
-                StrokeThickness = 1,
-
+                X = 20,
+                Y = 20,
+                Fill = OxyColors.Black,
+                Size = 3,
             };
+
+            (plotView.Model)?.Annotations.Add(teste);
+            plotView.InvalidatePlot(true);
         }
 
 
@@ -89,65 +88,57 @@ namespace CrossPlots
             init_x = plotView.Model?.Axes[0].InverseTransform(e.X) ?? 0;
             init_y = plotView.Model?.Axes[1].InverseTransform(e.Y) ?? 0;
 
-            // null if didn't find any ellipse where clicked
-            var found_ellipse = IsMouseInsideEllipseAnnotation(init_x, init_y);
+            // null if didn't clicked inside the ellipse
+            var clicked_inside_ellipse = IsMouseInsideEllipseAnnotation(init_x, init_y);
 
-            if (found_ellipse != null && e.Button == MouseButtons.Right)
+            if (clicked_inside_ellipse && e.Button == MouseButtons.Right)
             {
-                DestroyEllipseAnnotation(found_ellipse);
+                DestroyEllipseAnnotation();
                 return;
             }
 
-            // must be holding "CRTL" key to create / edit an ellipse
+            // must be holding "CRTL" key to create
             if (ModifierKeys == Keys.Control)
             {
-                if (found_ellipse == null)
+                if (!clicked_inside_ellipse)
                 {
                     CreateEllipse(init_x, init_y);
                 }
             }
 
-            if (found_ellipse != null && e.Button == MouseButtons.Left)
+            if (clicked_inside_ellipse && e.Button == MouseButtons.Left && ellipse_wrapper.rectangle is null)
             {
-                // no ellipse selected
-                if (lastSelectedEllipseWrapper == null)
-                {
-                    DestroyRectangleAnnotation();
-                    CreateRectangleAroundEllipse(found_ellipse);
-                }
-                // selecting a different ellipse than the one currently selected
-                else if (lastSelectedEllipseWrapper != null && found_ellipse != lastSelectedEllipseWrapper.ellipse)
-                {
-                    CreateRectangleAroundEllipse(found_ellipse);
-                }
-                // by selecting the same ellipse again, allows for edition
-                else
-                {
-                    EditEllipse();
-                }
+                CreateRectangleAroundEllipse();
             }
         }
 
         // returns null when mouse wasn't inside an ellipse
-        private EllipseAnnotation IsMouseInsideEllipseAnnotation(double x, double y)
+        private bool IsMouseInsideEllipseAnnotation(double x, double y)
         {
-            foreach (var wrapper in ellipse_wrappers)
+            if (ellipse_wrapper is null)
             {
-                var ellipse = wrapper.ellipse;
-                if (x >= ellipse.X - ellipse.Width / 2 &&
-                    x <= ellipse.X + ellipse.Width / 2 &&
-                    y >= ellipse.Y - ellipse.Height / 2 &&
-                    y <= ellipse.Y + ellipse.Height / 2)
-                {
-                    return ellipse;
-                }
+                return false;
             }
 
-            return null;
+            var ellipse = ellipse_wrapper.ellipse;
+            if (x >= ellipse.X - ellipse.Width / 2 &&
+                x <= ellipse.X + ellipse.Width / 2 &&
+                y >= ellipse.Y - ellipse.Height / 2 &&
+                y <= ellipse.Y + ellipse.Height / 2)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private void CreateEllipse(double init_x, double init_y)
         {
+            if (ellipse_wrapper != null)
+            {
+                DestroyEllipseAnnotation();
+            }
+
             // Create a new ellipse annotation
             ellipseAnnotation = new EllipseAnnotation
             {
@@ -160,15 +151,16 @@ namespace CrossPlots
                 StrokeThickness = 1
             };
 
-            // Add the ellipse annotation to the plot model
             (plotView.Model)?.Annotations.Add(ellipseAnnotation);
-            ellipse_wrappers.Add(new Ellipse_Wrapper(ellipseAnnotation));
+            ellipse_wrapper = new Ellipse_Wrapper(ellipseAnnotation);
 
             plotView.InvalidatePlot(true);  // refresh
         }
 
-        private void CreateRectangleAroundEllipse(EllipseAnnotation ellipse)
+        private void CreateRectangleAroundEllipse()
         {
+            var ellipse = ellipse_wrapper.ellipse;
+
             double left = ellipse.X - ellipse.Width / 2;
             double top = ellipse.Y + ellipse.Height / 2;
             double right = ellipse.X + ellipse.Width / 2;
@@ -189,55 +181,33 @@ namespace CrossPlots
             model.Annotations.Add(rectangle);
             plotView.InvalidatePlot(true);
 
-            foreach (var ellipse_wrapper in ellipse_wrappers)
-            {
-                if (ellipse_wrapper.ellipse == ellipse)
-                {
-                    ellipse_wrapper.rectangle = rectangle;
-                    lastSelectedEllipseWrapper = ellipse_wrapper;
-                    return;
-                }
-            }
+            ellipse_wrapper.rectangle = rectangle;
         }
 
-        private void EditEllipse() { }
 
-        // TODO: check if is not the lastSelectedEllipseWrapper
-        private void DestroyEllipseAnnotation(EllipseAnnotation ellipse)
+        private void DestroyEllipseAnnotation()
         {
             var model = plotView.Model;
 
-            if (ellipse == lastSelectedEllipseWrapper.ellipse)
+            model.Annotations.Remove(ellipse_wrapper.ellipse);
+            if (ellipse_wrapper.rectangle != null)
             {
-                lastSelectedEllipseWrapper = null;
+                model.Annotations.Remove(ellipse_wrapper.rectangle);
             }
 
-            foreach (var wrapper in ellipse_wrappers)
-            {
-                if (wrapper.ellipse == ellipse)
-                {
-                    model.Annotations.Remove(wrapper.ellipse);
-                    if (wrapper.rectangle != null)
-                    {
-                        model.Annotations.Remove(wrapper.rectangle);
-                        lastSelectedEllipseWrapper = null;
-                    }
-                    ellipse_wrappers.Remove(wrapper);
+            model.Annotations.Remove(ellipse_wrapper.ellipse);
+            ellipse_wrapper = null;
 
-                    plotView.InvalidatePlot(true);
-
-                    return;
-                }
-            }
+            plotView.InvalidatePlot(true);
         }
+
 
         private void DestroyRectangleAnnotation()
         {
-            plotView.Model.Annotations.Remove(lastSelectedEllipseWrapper.rectangle);
+            plotView.Model.Annotations.Remove(ellipse_wrapper.rectangle);
             plotView.InvalidatePlot(true);
 
-            lastSelectedEllipseWrapper.rectangle = null;
-            lastSelectedEllipseWrapper = null;
+            ellipse_wrapper.rectangle = null;
         }
 
         private void PlotView_MouseMove(object sender, MouseEventArgs e)
