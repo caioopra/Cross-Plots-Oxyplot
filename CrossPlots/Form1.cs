@@ -30,7 +30,6 @@ namespace CrossPlots
 
         private void InitializePlot()
         {
-
             // Create a scatter plot series
             scatterSeries = new ScatterSeries
             {
@@ -93,7 +92,7 @@ namespace CrossPlots
 
             if (clicked_inside_ellipse && e.Button == MouseButtons.Right)
             {
-                DestroyEllipseAnnotation();
+                DestroyEllipse();
                 return;
             }
 
@@ -112,7 +111,6 @@ namespace CrossPlots
             }
         }
 
-        // returns null when mouse wasn't inside an ellipse
         private bool IsMouseInsideEllipseAnnotation(double x, double y)
         {
             if (ellipse_wrapper is null)
@@ -136,7 +134,7 @@ namespace CrossPlots
         {
             if (ellipse_wrapper != null)
             {
-                DestroyEllipseAnnotation();
+                DestroyEllipse();
             }
 
             // Create a new ellipse annotation
@@ -159,33 +157,16 @@ namespace CrossPlots
 
         private void CreateRectangleAroundEllipse()
         {
-            var ellipse = ellipse_wrapper.ellipse;
-
-            double left = ellipse.X - ellipse.Width / 2;
-            double top = ellipse.Y + ellipse.Height / 2;
-            double right = ellipse.X + ellipse.Width / 2;
-            double bottom = ellipse.Y - ellipse.Height / 2;
-
-            var rectangle = new RectangleAnnotation
-            {
-                MinimumX = left,
-                MaximumX = right,
-                MinimumY = bottom,
-                MaximumY = top,
-                Fill = OxyColors.Transparent,
-                StrokeThickness = 2,
-                Stroke = OxyColors.Black,
-            };
-
             var model = plotView.Model;
+
+            var rectangle = ellipse_wrapper.CreateRectangleAroundEllipse(model);
+
             model.Annotations.Add(rectangle);
             plotView.InvalidatePlot(true);
-
-            ellipse_wrapper.rectangle = rectangle;
         }
 
 
-        private void DestroyEllipseAnnotation()
+        private void DestroyEllipse()
         {
             var model = plotView.Model;
 
@@ -193,21 +174,13 @@ namespace CrossPlots
             if (ellipse_wrapper.rectangle != null)
             {
                 model.Annotations.Remove(ellipse_wrapper.rectangle);
+                ellipse_wrapper.DestroyAnchors(model);
             }
 
             model.Annotations.Remove(ellipse_wrapper.ellipse);
             ellipse_wrapper = null;
 
             plotView.InvalidatePlot(true);
-        }
-
-
-        private void DestroyRectangleAnnotation()
-        {
-            plotView.Model.Annotations.Remove(ellipse_wrapper.rectangle);
-            plotView.InvalidatePlot(true);
-
-            ellipse_wrapper.rectangle = null;
         }
 
         private void PlotView_MouseMove(object sender, MouseEventArgs e)
