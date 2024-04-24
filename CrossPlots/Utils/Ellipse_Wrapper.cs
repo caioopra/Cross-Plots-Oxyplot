@@ -8,6 +8,19 @@ namespace CrossPlots
     {
         public EllipseAnnotation ellipse;
         public RectangleAnnotation rectangle;
+        public bool editing = false;
+
+        public enum Anchors : int
+        {
+            TOP = 0,
+            BOTTOM = 1,
+            LEFT = 2,
+            RIGHT = 3,
+            TOP_RIGHT = 4,
+            BOTTOM_RIGHT = 5,
+            BOTTOM_LEFT = 6,
+            TOP_LEFT = 7,
+        }
 
         /// <summary>
         /// Anchors in the middle of each edge of the rectangle, in the order:
@@ -20,6 +33,13 @@ namespace CrossPlots
         /// TOP-RIGHT, BOTTOM-RIGHT, BOTTOM-LEFT, TOP-LEFT
         /// </summary>
         public List<PointAnnotation> cornerAnchors = new List<PointAnnotation>(); // TR, BR, BL, TL
+
+        /// <summary>
+        /// Anchors in edges and corners:
+        /// 0-3: TOP, RIGHT, BOTTOM, LEFT
+        /// 4-7: TOP-RIGHT, BOTTOM-RIGHT, BOTTOM-LEFT, TOP-LEFT
+        /// </summary>
+        public List<PointAnnotation> anchors = new List<PointAnnotation>();
 
         public Ellipse_Wrapper(EllipseAnnotation ellipse, RectangleAnnotation rectangle = null)
         {
@@ -84,15 +104,10 @@ namespace CrossPlots
                 Size = 3
             };
 
-            edgeAnchors.Add(top_point);
-            edgeAnchors.Add(right_point);
-            edgeAnchors.Add(bottom_point);
-            edgeAnchors.Add(left_point);
-
-            foreach (var p in edgeAnchors)
-            {
-                model.Annotations.Add(p);
-            }
+            anchors.Add(top_point);
+            anchors.Add(right_point);
+            anchors.Add(bottom_point);
+            anchors.Add(left_point);
 
             // corner points
             var top_right_point = new PointAnnotation
@@ -124,12 +139,12 @@ namespace CrossPlots
                 Size = 3
             };
 
-            cornerAnchors.Add(top_right_point);
-            cornerAnchors.Add(bottom_right_point);
-            cornerAnchors.Add(bottom_left_point);
-            cornerAnchors.Add(top_left_point);
+            anchors.Add(top_right_point);
+            anchors.Add(bottom_right_point);
+            anchors.Add(bottom_left_point);
+            anchors.Add(top_left_point);
 
-            foreach (var p in cornerAnchors)
+            foreach (var p in anchors)
             {
                 model.Annotations.Add(p);
             }
@@ -137,21 +152,15 @@ namespace CrossPlots
 
         public void DestroyAnchors(PlotModel model)
         {
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 8; i++)
             {
-                model.Annotations.Remove(edgeAnchors[i]);
-                edgeAnchors[i] = null;
-            }
-
-            for (int i = 0; i < 4; i++)
-            {
-                model.Annotations.Remove(cornerAnchors[i]);
-                cornerAnchors[i] = null;
+                model.Annotations.Remove(anchors[i]);
+                anchors[i] = null;
             }
         }
 
         // considering a small error on the anchor
-        public bool ClickedInAnchor(double x_pos, double y_pos)
+        public int ClickedInAnchor(double x_pos, double y_pos)
         {
             var min_x_low = rectangle.MinimumX - 5;
             var min_x_high = rectangle.MinimumX + 5;
@@ -175,53 +184,55 @@ namespace CrossPlots
                 // clicked on top right anchor
                 if (x_pos >= max_x_low && x_pos <= max_x_high)
                 {
-
+                    return (int)Anchors.TOP_RIGHT;
                 }
                 // clicked on top left anchor
-                else if (x_pos >= min_x_low && x_pos <= min_x_high)
+                if (x_pos >= min_x_low && x_pos <= min_x_high)
                 {
-
+                    return (int)Anchors.TOP_LEFT;
                 }
                 // clicked on the top edge anchor
-                else if (x_pos >= median_x_low && x_pos <= median_x_high)
+                if (x_pos >= median_x_low && x_pos <= median_x_high)
                 {
-
+                    return (int)Anchors.TOP;
                 }
             }
+
             // clicked on one of the lower anchors
-            else if (y_pos >= min_y_low && y_pos <= min_y_high)
+            if (y_pos >= min_y_low && y_pos <= min_y_high)
             {
                 // clicked on bottom right anchor
                 if (x_pos >= max_x_low && x_pos <= max_x_high)
                 {
-
+                    return (int)Anchors.BOTTOM_RIGHT;
                 }
                 // clicked on bottom left anchor
-                else if (x_pos >= min_x_low && x_pos <= min_x_high)
+                if (x_pos >= min_x_low && x_pos <= min_x_high)
                 {
-
+                    return (int)Anchors.BOTTOM_LEFT;
                 }
                 // clicked on the bottom edge anchor
-                else if (x_pos >= median_x_low && x_pos <= median_x_high)
+                if (x_pos >= median_x_low && x_pos <= median_x_high)
                 {
-
+                    return (int)Anchors.BOTTOM;
                 }
             }
             // clicked one of the lateral edges
-            else if (y_pos >= median_y_low && y_pos <= median_y_high)
+            if (y_pos >= median_y_low && y_pos <= median_y_high)
             {
                 // clicked on right edge
                 if (x_pos >= max_x_low && x_pos <= max_x_high)
                 {
-
+                    return (int)Anchors.RIGHT;
                 }
                 // clicked on left edge
-                else if (x_pos >= min_x_low && x_pos <= min_x_high)
+                if (x_pos >= min_x_low && x_pos <= min_x_high)
                 {
-
+                    return (int)Anchors.LEFT;
                 }
             }
-            return true;
+
+            return -1;
         }
     }
 }
