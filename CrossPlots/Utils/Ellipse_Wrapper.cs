@@ -149,5 +149,79 @@ namespace CrossPlots
                 cornerAnchors[i] = null;
             }
         }
+
+        // considering a small error on the anchor
+        public bool ClickedInAnchor(double x_pos, double y_pos)
+        {
+            var min_x_low = rectangle.MinimumX - 5;
+            var min_x_high = rectangle.MinimumX + 5;
+            var max_x_low = rectangle.MaximumX - 5;
+            var max_x_high = rectangle.MaximumX + 5;
+
+            var min_y_low = rectangle.MinimumY - 5;
+            var min_y_high = rectangle.MinimumY + 5;
+            var max_y_low = rectangle.MaximumY - 5;
+            var max_y_high = rectangle.MaximumY + 5;
+
+            var median_x_low = (rectangle.MaximumX - rectangle.MinimumX) / 2 - 5;
+            var median_x_high = (rectangle.MaximumX - rectangle.MinimumX) / 2 + 5;
+
+            var median_y_low = (rectangle.MaximumY - rectangle.MinimumY) / 2 - 5;
+            var median_y_high = (rectangle.MaximumY - rectangle.MinimumY) / 2 + 5;
+
+            // clicked on one of the top anchors
+            if (y_pos >= max_y_low && y_pos <= max_y_high)
+            {
+                // clicked on top right anchor
+                if (x_pos >= max_x_low && x_pos <= max_x_high)
+                {
+
+                }
+                // clicked on top left anchor
+                else if (x_pos >= min_x_low && x_pos <= min_x_high)
+                {
+
+                }
+                // clicked on the top edge anchor
+                else if (x_pos >= median_x_low && x_pos <= median_x_high)
+                {
+
+                }
+            }
+            // clicked on one of the lower anchors
+            else if (y_pos >= min_y_low && y_pos <= min_y_high)
+            {
+                // clicked on bottom right anchor
+                if (x_pos >= max_x_low && x_pos <= max_x_high)
+                {
+
+                }
+                // clicked on bottom left anchor
+                else if (x_pos >= min_x_low && x_pos <= min_x_high)
+                {
+
+                }
+                // clicked on the bottom edge anchor
+                else if (x_pos >= median_x_low && x_pos <= median_x_high)
+                {
+
+                }
+            }
+            // clicked one of the lateral edges
+            else if (y_pos >= median_y_low && y_pos <= median_y_high)
+            {
+                // clicked on right edge
+                if (x_pos >= max_x_low && x_pos <= max_x_high)
+                {
+
+                }
+                // clicked on left edge
+                else if (x_pos >= min_x_low && x_pos <= min_x_high)
+                {
+
+                }
+            }
+            return true;
+        }
     }
 }

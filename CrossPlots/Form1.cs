@@ -67,18 +67,6 @@ namespace CrossPlots
 
             // Refresh the plot view
             plotView.InvalidatePlot(true);
-
-            // TEST
-            var teste = new PointAnnotation
-            {
-                X = 20,
-                Y = 20,
-                Fill = OxyColors.Black,
-                Size = 3,
-            };
-
-            (plotView.Model)?.Annotations.Add(teste);
-            plotView.InvalidatePlot(true);
         }
 
 
@@ -103,6 +91,11 @@ namespace CrossPlots
                 {
                     CreateEllipse(init_x, init_y);
                 }
+            }
+
+            if (!(ellipse_wrapper is null) && !(ellipse_wrapper.rectangle is null) && ellipse_wrapper.ClickedInAnchor(init_x, init_y))
+            {
+
             }
 
             if (clicked_inside_ellipse && e.Button == MouseButtons.Left && ellipse_wrapper.rectangle is null)
