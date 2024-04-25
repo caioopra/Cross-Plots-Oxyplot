@@ -100,7 +100,7 @@ namespace CrossPlots
                 ellipse_wrapper.current_anchor = ellipse_wrapper.ClickedInAnchor(init_x, init_y);
             }
 
-            if (!(ellipse_wrapper.rectangle is null) && ellipse_wrapper.current_anchor > 0)
+            if (!(ellipse_wrapper.rectangle is null) && ellipse_wrapper.current_anchor >= 0)
             {
                 ellipse_wrapper.editing = true;
             }

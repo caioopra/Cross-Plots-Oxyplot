@@ -167,11 +167,11 @@ namespace CrossPlots
             var max_y_low = rectangle.MaximumY - 5;
             var max_y_high = rectangle.MaximumY + 5;
 
-            var median_x_low = (rectangle.MaximumX - rectangle.MinimumX) / 2 - 5;
-            var median_x_high = (rectangle.MaximumX - rectangle.MinimumX) / 2 + 5;
+            var median_x_low = rectangle.MinimumX + (rectangle.MaximumX - rectangle.MinimumX) / 2 - 5;
+            var median_x_high = rectangle.MinimumX + (rectangle.MaximumX - rectangle.MinimumX) / 2 + 5;
 
-            var median_y_low = (rectangle.MaximumY - rectangle.MinimumY) / 2 - 5;
-            var median_y_high = (rectangle.MaximumY - rectangle.MinimumY) / 2 + 5;
+            var median_y_low = rectangle.MinimumY + (rectangle.MaximumY - rectangle.MinimumY) / 2 - 5;
+            var median_y_high = rectangle.MinimumY + (rectangle.MaximumY - rectangle.MinimumY) / 2 + 5;
 
             // clicked on one of the top anchors
             if (y_pos >= max_y_low && y_pos <= max_y_high)
@@ -238,38 +238,29 @@ namespace CrossPlots
             switch ((Anchors)current_anchor)
             {
                 case Anchors.TOP:
-                    ellipse.Height += centerY - y;
-                    ellipse.Y = y + (centerY - y);
-                    break;
                 case Anchors.BOTTOM:
                     ellipse.Height = Math.Abs(centerY - y);
                     break;
+
                 case Anchors.LEFT:
-                    ellipse.Width += centerX - x;
-                    ellipse.X = x + (centerX - x);
-                    break;
                 case Anchors.RIGHT:
                     ellipse.Width = Math.Abs(centerX - x);
                     break;
+
                 case Anchors.TOP_LEFT:
-                    ellipse.Width = Math.Abs(centerX - x);
-                    ellipse.Height = Math.Abs(centerY - y);
-                    break;
                 case Anchors.TOP_RIGHT:
                     ellipse.Width = Math.Abs(centerX - x);
                     ellipse.Height = Math.Abs(centerY - y);
                     break;
+
                 case Anchors.BOTTOM_LEFT:
-                    ellipse.Width = Math.Abs(centerX - x);
-                    ellipse.Height = Math.Abs(centerY - y);
-                    break;
                 case Anchors.BOTTOM_RIGHT:
                     ellipse.Width = Math.Abs(centerX - x);
                     ellipse.Height = Math.Abs(centerY - y);
                     break;
             }
 
-            // Update rectangle annotation if it exists
+            // updating rectangle annotation
             double left = ellipse.X - ellipse.Width / 2;
             double top = ellipse.Y + ellipse.Height / 2;
             double right = ellipse.X + ellipse.Width / 2;
@@ -280,6 +271,7 @@ namespace CrossPlots
             rectangle.MinimumY = bottom;
             rectangle.MaximumY = top;
 
+            // updating anchors
             DestroyAnchors();
             CreateAnchors(left, top, right, bottom);
         }
