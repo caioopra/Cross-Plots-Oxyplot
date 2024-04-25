@@ -1,17 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Windows.Forms;
 using OxyPlot;
 using OxyPlot.Annotations;
-using OxyPlot.WindowsForms;
+using OxyPlot.Series;
 
 namespace CrossPlots
 {
     public class Ellipse_Wrapper
     {
-        public EllipseAnnotation ellipse;
         public PlotModel model;
+
+        public EllipseAnnotation ellipse;
+        public PolygonAnnotation ellipse_polygon;
         public RectangleAnnotation rectangle;
+
         public bool editing = false;
 
         public enum Anchors : int
@@ -24,24 +26,31 @@ namespace CrossPlots
             BOTTOM_RIGHT = 5,
             BOTTOM_LEFT = 6,
             TOP_LEFT = 7,
+            ROTATION = 8,
         }
 
         /// <summary>
         /// Anchors in edges and corners:
         /// 0-3: TOP, RIGHT, BOTTOM, LEFT
         /// 4-7: TOP-RIGHT, BOTTOM-RIGHT, BOTTOM-LEFT, TOP-LEFT
+        /// 8  : ROTATION
         /// </summary>
         public List<PointAnnotation> anchors = new List<PointAnnotation>();
         public int current_anchor = -1;
+
+        // line that connects top anchor to rotation anchor
+        public LineSeries line;
+        public PointAnnotation rotation_anchor;
 
         public Ellipse_Wrapper(EllipseAnnotation ellipse, PlotModel model, RectangleAnnotation rectangle = null)
         {
             this.ellipse = ellipse;
             this.model = model;
             this.rectangle = rectangle;
+            this.ellipse_polygon = new PolygonAnnotation();
         }
 
-        public RectangleAnnotation CreateRectangleAroundEllipse()
+        public void CreateRectangleAroundEllipse()
         {
             double left = ellipse.X - ellipse.Width / 2;
             double top = ellipse.Y + ellipse.Height / 2;
@@ -55,15 +64,18 @@ namespace CrossPlots
                 MinimumY = bottom,
                 MaximumY = top,
                 Fill = OxyColors.Transparent,
-                StrokeThickness = 2,
+                StrokeThickness = 1,
                 Stroke = OxyColors.Black,
             };
 
-            CreateAnchors(left, top, right, bottom);
-
             this.rectangle = rectangle;
+            
+            CreateAnchors(left, top, right, bottom);
+            CreateLine();
 
-            return rectangle;
+            model.Annotations.Add(rectangle);
+
+            model.InvalidatePlot(true);
         }
 
         private void CreateAnchors(double left, double top, double right, double bottom)
@@ -138,23 +150,57 @@ namespace CrossPlots
             anchors.Add(bottom_left_point);
             anchors.Add(top_left_point);
 
+            var rotation_point = new PointAnnotation
+            {
+                X = (right + left) / 2,
+                Y = top + 10,
+                Fill = OxyColors.Black,
+                Size = 3
+            };
+            anchors.Add(rotation_point);
+
             foreach (var p in anchors)
             {
                 model.Annotations.Add(p);
             }
         }
 
+        public void CreateLine()
+        {
+            line = new LineSeries
+            {
+                Points = {
+                    new DataPoint(anchors[(int)Anchors.TOP].X, anchors[(int)Anchors.TOP].Y),
+                    new DataPoint(anchors[(int)Anchors.TOP].X, anchors[(int)Anchors.TOP].Y + 10)
+                },
+                Color = OxyColors.Black,
+                StrokeThickness = 1,
+                LineStyle = LineStyle.Dash,
+            };
+
+            model.Series.Add(line);
+        }
+
         public void DestroyAnchors()
         {
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < 9; i++)
             {
                 model.Annotations.Remove(anchors[i]);
             }
 
             anchors.Clear();
+
+            model.Series.Remove(line);
+            line = null;
         }
 
         // considering a small error on the anchor click
+        /// <summary>
+        /// Verifies if a anchor was clicked. If dind't clicked in any, returns -1, else returns the number that identifies an achor
+        /// </summary>
+        /// <param name="x_pos"></param>
+        /// <param name="y_pos"></param>
+        /// <returns>-1 if any anchor was clicked; ID of anchor in anchors list if clicked in any</returns>
         public int ClickedInAnchor(double x_pos, double y_pos)
         {
             var min_x_low = rectangle.MinimumX - 5;
@@ -227,6 +273,16 @@ namespace CrossPlots
                 }
             }
 
+            // clicked on rotation anchor
+            if (x_pos >= median_x_low &&
+                x_pos <= median_x_high &&
+                y_pos >= max_y_low + 10 &&
+                y_pos <= max_y_high + 10
+            )
+            {
+                return (int)Anchors.ROTATION;
+            }
+
             return -1;
         }
 
@@ -274,6 +330,7 @@ namespace CrossPlots
             // updating anchors
             DestroyAnchors();
             CreateAnchors(left, top, right, bottom);
+            CreateLine();
         }
     }
 }

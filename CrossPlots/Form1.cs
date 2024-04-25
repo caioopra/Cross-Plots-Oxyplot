@@ -54,6 +54,28 @@ namespace CrossPlots
 
             // Add the plot view to the form
             Controls.Add(plotView);
+
+            // TEST: CREATING ELLIPSE AS POLYGON (WORKING)
+            //var pol = new PolygonAnnotation();
+            //pol.Fill = OxyColor.FromAColor(10, OxyColors.Blue);
+            //pol.Stroke = OxyColors.Black;
+            //pol.StrokeThickness = 1;
+            //double step = 2 * Math.PI / 200;
+            //var h = 10;
+            //var k = 10;
+            //var rotation = 30;
+            //var a = 20;
+            //var b = 15;
+
+            //for (double theta = 0; theta < 2 * Math.PI; theta += step)
+            //{
+            //    var xx = a * Math.Cos(rotation) * Math.Cos(theta) + b * Math.Sin(rotation) * Math.Sin(theta) + h;
+            //    var yy = b * Math.Cos(rotation) * Math.Sin(theta) - a * Math.Sin(rotation) * Math.Cos(theta) + k;
+            //    pol.Points.Add(new DataPoint(xx, yy));
+            //}
+
+            //plotModel.Annotations.Add(pol);
+            //plotModel.InvalidatePlot(true);
         }
 
         private void PlotData()
@@ -107,7 +129,7 @@ namespace CrossPlots
 
             if (clicked_inside_ellipse && e.Button == MouseButtons.Left && ellipse_wrapper.rectangle is null)
             {
-                CreateRectangleAroundEllipse();
+                ellipse_wrapper.CreateRectangleAroundEllipse();
             }
         }
 
@@ -154,17 +176,6 @@ namespace CrossPlots
 
             plotView.InvalidatePlot(true);  // refresh
         }
-
-        private void CreateRectangleAroundEllipse()
-        {
-            var model = plotView.Model;
-
-            var rectangle = ellipse_wrapper.CreateRectangleAroundEllipse();
-
-            model.Annotations.Add(rectangle);
-            plotView.InvalidatePlot(true);
-        }
-
 
         private void DestroyEllipse()
         {
