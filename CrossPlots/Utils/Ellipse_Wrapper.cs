@@ -1,12 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Windows.Forms;
 using OxyPlot;
 using OxyPlot.Annotations;
+using OxyPlot.WindowsForms;
 
 namespace CrossPlots
 {
     public class Ellipse_Wrapper
     {
         public EllipseAnnotation ellipse;
+        public PlotModel model;
         public RectangleAnnotation rectangle;
         public bool editing = false;
 
@@ -23,31 +27,21 @@ namespace CrossPlots
         }
 
         /// <summary>
-        /// Anchors in the middle of each edge of the rectangle, in the order:
-        /// TOP, RIGHT, BOTTOM, LEFT
-        /// </summary>
-        public List<PointAnnotation> edgeAnchors = new List<PointAnnotation>();
-
-        /// <summary>
-        /// Anchors in the corners/vertex of the rectangle, in the order:
-        /// TOP-RIGHT, BOTTOM-RIGHT, BOTTOM-LEFT, TOP-LEFT
-        /// </summary>
-        public List<PointAnnotation> cornerAnchors = new List<PointAnnotation>(); // TR, BR, BL, TL
-
-        /// <summary>
         /// Anchors in edges and corners:
         /// 0-3: TOP, RIGHT, BOTTOM, LEFT
         /// 4-7: TOP-RIGHT, BOTTOM-RIGHT, BOTTOM-LEFT, TOP-LEFT
         /// </summary>
         public List<PointAnnotation> anchors = new List<PointAnnotation>();
+        public int current_anchor = -1;
 
-        public Ellipse_Wrapper(EllipseAnnotation ellipse, RectangleAnnotation rectangle = null)
+        public Ellipse_Wrapper(EllipseAnnotation ellipse, PlotModel model, RectangleAnnotation rectangle = null)
         {
             this.ellipse = ellipse;
+            this.model = model;
             this.rectangle = rectangle;
         }
 
-        public RectangleAnnotation CreateRectangleAroundEllipse(PlotModel model)
+        public RectangleAnnotation CreateRectangleAroundEllipse()
         {
             double left = ellipse.X - ellipse.Width / 2;
             double top = ellipse.Y + ellipse.Height / 2;
@@ -65,14 +59,14 @@ namespace CrossPlots
                 Stroke = OxyColors.Black,
             };
 
-            CreateAnchors(model, left, top, right, bottom);
+            CreateAnchors(left, top, right, bottom);
 
             this.rectangle = rectangle;
 
             return rectangle;
         }
 
-        private void CreateAnchors(PlotModel model, double left, double top, double right, double bottom)
+        private void CreateAnchors(double left, double top, double right, double bottom)
         {
             // edge points
             var top_point = new PointAnnotation
@@ -150,16 +144,17 @@ namespace CrossPlots
             }
         }
 
-        public void DestroyAnchors(PlotModel model)
+        public void DestroyAnchors()
         {
             for (int i = 0; i < 8; i++)
             {
                 model.Annotations.Remove(anchors[i]);
-                anchors[i] = null;
             }
+
+            anchors.Clear();
         }
 
-        // considering a small error on the anchor
+        // considering a small error on the anchor click
         public int ClickedInAnchor(double x_pos, double y_pos)
         {
             var min_x_low = rectangle.MinimumX - 5;
@@ -233,6 +228,60 @@ namespace CrossPlots
             }
 
             return -1;
+        }
+
+        public void EditEllipse(double x, double y)
+        {
+            double centerX = ellipse.X;
+            double centerY = ellipse.Y;
+
+            switch ((Anchors)current_anchor)
+            {
+                case Anchors.TOP:
+                    ellipse.Height += centerY - y;
+                    ellipse.Y = y + (centerY - y);
+                    break;
+                case Anchors.BOTTOM:
+                    ellipse.Height = Math.Abs(centerY - y);
+                    break;
+                case Anchors.LEFT:
+                    ellipse.Width += centerX - x;
+                    ellipse.X = x + (centerX - x);
+                    break;
+                case Anchors.RIGHT:
+                    ellipse.Width = Math.Abs(centerX - x);
+                    break;
+                case Anchors.TOP_LEFT:
+                    ellipse.Width = Math.Abs(centerX - x);
+                    ellipse.Height = Math.Abs(centerY - y);
+                    break;
+                case Anchors.TOP_RIGHT:
+                    ellipse.Width = Math.Abs(centerX - x);
+                    ellipse.Height = Math.Abs(centerY - y);
+                    break;
+                case Anchors.BOTTOM_LEFT:
+                    ellipse.Width = Math.Abs(centerX - x);
+                    ellipse.Height = Math.Abs(centerY - y);
+                    break;
+                case Anchors.BOTTOM_RIGHT:
+                    ellipse.Width = Math.Abs(centerX - x);
+                    ellipse.Height = Math.Abs(centerY - y);
+                    break;
+            }
+
+            // Update rectangle annotation if it exists
+            double left = ellipse.X - ellipse.Width / 2;
+            double top = ellipse.Y + ellipse.Height / 2;
+            double right = ellipse.X + ellipse.Width / 2;
+            double bottom = ellipse.Y - ellipse.Height / 2;
+
+            rectangle.MinimumX = left;
+            rectangle.MaximumX = right;
+            rectangle.MinimumY = bottom;
+            rectangle.MaximumY = top;
+
+            DestroyAnchors();
+            CreateAnchors(left, top, right, bottom);
         }
     }
 }

@@ -95,13 +95,12 @@ namespace CrossPlots
                 }
             }
 
-            var clicked_inside_anchor = -1;
             if (ellipse_wrapper != null && ellipse_wrapper.rectangle != null)
             {
-                clicked_inside_anchor = ellipse_wrapper.ClickedInAnchor(init_x, init_y);
+                ellipse_wrapper.current_anchor = ellipse_wrapper.ClickedInAnchor(init_x, init_y);
             }
 
-            if (!(ellipse_wrapper.rectangle is null) && clicked_inside_anchor > 0)
+            if (!(ellipse_wrapper.rectangle is null) && ellipse_wrapper.current_anchor > 0)
             {
                 ellipse_wrapper.editing = true;
             }
@@ -151,7 +150,7 @@ namespace CrossPlots
             };
 
             (plotView.Model)?.Annotations.Add(ellipseAnnotation);
-            ellipse_wrapper = new Ellipse_Wrapper(ellipseAnnotation);
+            ellipse_wrapper = new Ellipse_Wrapper(ellipseAnnotation, plotView.Model);
 
             plotView.InvalidatePlot(true);  // refresh
         }
@@ -160,7 +159,7 @@ namespace CrossPlots
         {
             var model = plotView.Model;
 
-            var rectangle = ellipse_wrapper.CreateRectangleAroundEllipse(model);
+            var rectangle = ellipse_wrapper.CreateRectangleAroundEllipse();
 
             model.Annotations.Add(rectangle);
             plotView.InvalidatePlot(true);
@@ -175,7 +174,7 @@ namespace CrossPlots
             if (ellipse_wrapper.rectangle != null)
             {
                 model.Annotations.Remove(ellipse_wrapper.rectangle);
-                ellipse_wrapper.DestroyAnchors(model);
+                ellipse_wrapper.DestroyAnchors();
             }
 
             model.Annotations.Remove(ellipse_wrapper.ellipse);
@@ -188,7 +187,12 @@ namespace CrossPlots
         {
             if (!(ellipse_wrapper is null) && ellipse_wrapper.editing)
             {
-                EditEllipse(e);
+                ellipse_wrapper.EditEllipse(
+                    plotView.Model?.Axes[0].InverseTransform(e.X) ?? 0,
+                    plotView.Model?.Axes[1].InverseTransform(e.Y) ?? 0
+                );
+                plotView.InvalidatePlot(true);
+
                 return;
             }
 
@@ -215,30 +219,14 @@ namespace CrossPlots
             }
         }
 
-        private void EditEllipse(MouseEventArgs e)
-        {
-            fin_x = plotView.Model?.Axes[0].InverseTransform(e.X) ?? 0;
-            fin_y = plotView.Model?.Axes[1].InverseTransform(e.Y) ?? 0;
-
-            double x = init_x + ((fin_x - init_x) / 2);
-            double y = init_y + ((fin_y - init_y) / 2);
-
-            ellipse_wrapper.ellipse.Width += fin_x - init_x;
-            //ellipse_wrapper.ellipse.Height += Math.Abs(fin_y - init_y);
-            ellipse_wrapper.ellipse.X += x;
-            //ellipse_wrapper.ellipse.Y += y;
-
-            // Refresh the plot view
-            plotView.InvalidatePlot(true);
-        }
-
         private void PlotView_MouseUp(object sender, MouseEventArgs e)
         {
             // Reset the ellipse annotation once the mouse is released
             ellipseAnnotation = null;
 
-            if (ellipse_wrapper.editing)
+            if (ellipse_wrapper != null && ellipse_wrapper.editing)
             {
+                ellipse_wrapper.current_anchor = -1;
                 ellipse_wrapper.editing = false;
             }
         }
