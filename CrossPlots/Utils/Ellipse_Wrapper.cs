@@ -48,7 +48,7 @@ namespace CrossPlots
             this.ellipse = ellipse;
             this.model = model;
             this.rectangle = rectangle;
-            this.ellipse_polygon = new PolygonAnnotation();
+            ellipse_polygon = new PolygonAnnotation();
         }
 
         public void CreateRectangleAroundEllipse()
@@ -335,6 +335,13 @@ namespace CrossPlots
             DestroyAnchors();
             CreateAnchors(left, top, right, bottom);
             CreateLine();
+        }
+
+        public void RotateObject(double angle)
+        {
+            angle = (Math.PI / 180) * angle;
+            var a = Utils.MatrixOperations.CreateFullRotationMatrix(angle, ellipse.X, ellipse.Y);
+            
         }
     }
 }
