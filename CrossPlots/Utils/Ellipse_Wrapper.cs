@@ -41,6 +41,7 @@ namespace CrossPlots
         // line that connects top anchor to rotation anchor
         public LineSeries line;
         public PointAnnotation rotation_anchor;
+        private double rotation_angle = 0;
 
         public Ellipse_Wrapper(EllipseAnnotation ellipse, PlotModel model, RectangleAnnotation rectangle = null)
         {
@@ -69,7 +70,7 @@ namespace CrossPlots
             };
 
             this.rectangle = rectangle;
-            
+
             CreateAnchors(left, top, right, bottom);
             CreateLine();
 
@@ -200,8 +201,7 @@ namespace CrossPlots
         /// </summary>
         /// <param name="x_pos"></param>
         /// <param name="y_pos"></param>
-        /// <returns>-1 if any anchor was clicked; ID of anchor in anchors list if clicked in any</returns>
-        public int ClickedInAnchor(double x_pos, double y_pos)
+        public void ClickedInAnchor(double x_pos, double y_pos)
         {
             var min_x_low = rectangle.MinimumX - 5;
             var min_x_high = rectangle.MinimumX + 5;
@@ -225,18 +225,19 @@ namespace CrossPlots
                 // clicked on top right anchor
                 if (x_pos >= max_x_low && x_pos <= max_x_high)
                 {
-                    return (int)Anchors.TOP_RIGHT;
+                    current_anchor = (int)Anchors.TOP_RIGHT;
                 }
                 // clicked on top left anchor
                 if (x_pos >= min_x_low && x_pos <= min_x_high)
                 {
-                    return (int)Anchors.TOP_LEFT;
+                    current_anchor = (int)Anchors.TOP_LEFT;
                 }
                 // clicked on the top edge anchor
                 if (x_pos >= median_x_low && x_pos <= median_x_high)
                 {
-                    return (int)Anchors.TOP;
+                    current_anchor = (int)Anchors.TOP;
                 }
+                return;
             }
 
             // clicked on one of the lower anchors
@@ -245,18 +246,19 @@ namespace CrossPlots
                 // clicked on bottom right anchor
                 if (x_pos >= max_x_low && x_pos <= max_x_high)
                 {
-                    return (int)Anchors.BOTTOM_RIGHT;
+                    current_anchor = (int)Anchors.BOTTOM_RIGHT;
                 }
                 // clicked on bottom left anchor
                 if (x_pos >= min_x_low && x_pos <= min_x_high)
                 {
-                    return (int)Anchors.BOTTOM_LEFT;
+                    current_anchor = (int)Anchors.BOTTOM_LEFT;
                 }
                 // clicked on the bottom edge anchor
                 if (x_pos >= median_x_low && x_pos <= median_x_high)
                 {
-                    return (int)Anchors.BOTTOM;
+                    current_anchor = (int)Anchors.BOTTOM;
                 }
+                return;
             }
             // clicked one of the lateral edges
             if (y_pos >= median_y_low && y_pos <= median_y_high)
@@ -264,13 +266,14 @@ namespace CrossPlots
                 // clicked on right edge
                 if (x_pos >= max_x_low && x_pos <= max_x_high)
                 {
-                    return (int)Anchors.RIGHT;
+                    current_anchor = (int)Anchors.RIGHT;
                 }
                 // clicked on left edge
                 if (x_pos >= min_x_low && x_pos <= min_x_high)
                 {
-                    return (int)Anchors.LEFT;
+                    current_anchor = (int)Anchors.LEFT;
                 }
+                return;
             }
 
             // clicked on rotation anchor
@@ -280,10 +283,11 @@ namespace CrossPlots
                 y_pos <= max_y_high + 10
             )
             {
-                return (int)Anchors.ROTATION;
+                current_anchor = (int)Anchors.ROTATION;
+                return;
             }
 
-            return -1;
+            current_anchor = -1;
         }
 
         public void EditEllipse(double x, double y)
@@ -295,24 +299,24 @@ namespace CrossPlots
             {
                 case Anchors.TOP:
                 case Anchors.BOTTOM:
-                    ellipse.Height = Math.Abs(centerY - y);
+                    ellipse.Height = Math.Abs(centerY - y) * 2;
                     break;
 
                 case Anchors.LEFT:
                 case Anchors.RIGHT:
-                    ellipse.Width = Math.Abs(centerX - x);
+                    ellipse.Width = Math.Abs(centerX - x) * 2;
                     break;
 
                 case Anchors.TOP_LEFT:
                 case Anchors.TOP_RIGHT:
-                    ellipse.Width = Math.Abs(centerX - x);
-                    ellipse.Height = Math.Abs(centerY - y);
+                    ellipse.Width = Math.Abs(centerX - x) * 2;
+                    ellipse.Height = Math.Abs(centerY - y) * 2;
                     break;
 
                 case Anchors.BOTTOM_LEFT:
                 case Anchors.BOTTOM_RIGHT:
-                    ellipse.Width = Math.Abs(centerX - x);
-                    ellipse.Height = Math.Abs(centerY - y);
+                    ellipse.Width = Math.Abs(centerX - x) * 2;
+                    ellipse.Height = Math.Abs(centerY - y) * 2;
                     break;
             }
 

@@ -55,27 +55,31 @@ namespace CrossPlots
             // Add the plot view to the form
             Controls.Add(plotView);
 
-            // TEST: CREATING ELLIPSE AS POLYGON (WORKING)
-            //var pol = new PolygonAnnotation();
-            //pol.Fill = OxyColor.FromAColor(10, OxyColors.Blue);
-            //pol.Stroke = OxyColors.Black;
-            //pol.StrokeThickness = 1;
-            //double step = 2 * Math.PI / 200;
-            //var h = 10;
-            //var k = 10;
-            //var rotation = 30;
-            //var a = 20;
-            //var b = 15;
+            //TEST: CREATING ELLIPSE AS POLYGON(WORKING)
+            var pol = new PolygonAnnotation
+            {
+                Fill = OxyColor.FromAColor(10, OxyColors.Blue),
+                Stroke = OxyColors.Black,
+                StrokeThickness = 1
+            };
+            double step = 2 * Math.PI / 200;
+            var xCenter = 50;
+            var yCenter = 50;
+            var rotation = (Math.PI / 180) * 90;
+            var majorAxisLen = 15.0;
+            var minorAxisLen = 7.5;
 
-            //for (double theta = 0; theta < 2 * Math.PI; theta += step)
-            //{
-            //    var xx = a * Math.Cos(rotation) * Math.Cos(theta) + b * Math.Sin(rotation) * Math.Sin(theta) + h;
-            //    var yy = b * Math.Cos(rotation) * Math.Sin(theta) - a * Math.Sin(rotation) * Math.Cos(theta) + k;
-            //    pol.Points.Add(new DataPoint(xx, yy));
-            //}
+            for (double theta = 0; theta < 2 * Math.PI; theta += step)
+            {
+                //var xx = majorAxisLen * Math.Cos(rotation) * Math.Cos(theta) + minorAxisLen * Math.Sin(rotation) * Math.Sin(theta) + xCenter;
+                //var yy = minorAxisLen * Math.Cos(rotation) * Math.Sin(theta) - majorAxisLen * Math.Sin(rotation) * Math.Cos(theta) + yCenter;
+                var xx = majorAxisLen * Math.Cos(rotation) * Math.Cos(theta) - minorAxisLen * Math.Sin(rotation) * Math.Sin(theta) + xCenter;
+                var yy = minorAxisLen * Math.Cos(rotation) * Math.Sin(theta) + majorAxisLen * Math.Sin(rotation) * Math.Cos(theta) + yCenter;
+                pol.Points.Add(new DataPoint(xx, yy));
+            }
 
-            //plotModel.Annotations.Add(pol);
-            //plotModel.InvalidatePlot(true);
+            plotModel.Annotations.Add(pol);
+            plotModel.InvalidatePlot(true);
         }
 
         private void PlotData()
@@ -119,12 +123,12 @@ namespace CrossPlots
 
             if (ellipse_wrapper != null && ellipse_wrapper.rectangle != null)
             {
-                ellipse_wrapper.current_anchor = ellipse_wrapper.ClickedInAnchor(init_x, init_y);
-            }
+                ellipse_wrapper.ClickedInAnchor(init_x, init_y);
 
-            if (!(ellipse_wrapper.rectangle is null) && ellipse_wrapper.current_anchor >= 0)
-            {
-                ellipse_wrapper.editing = true;
+                if (ellipse_wrapper.current_anchor >= 0)
+                {
+                    ellipse_wrapper.editing = true;  // todo: do it inside Ellipse_Wrapper
+                }
             }
 
             if (clicked_inside_ellipse && e.Button == MouseButtons.Left && ellipse_wrapper.rectangle is null)
