@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using CrossPlots.Utils;
 using OxyPlot;
 using OxyPlot.Annotations;
 using OxyPlot.Series;
+using OxyPlot.WindowsForms;
 
 namespace CrossPlots
 {
@@ -13,6 +15,7 @@ namespace CrossPlots
         public EllipseAnnotation ellipse;
         public PolygonAnnotation ellipse_polygon;
         public RectangleAnnotation rectangle;
+        public CustomEllipse ellipse_annotation;
 
         public bool editing = false;
 
@@ -41,7 +44,6 @@ namespace CrossPlots
         // line that connects top anchor to rotation anchor
         public LineSeries line;
         public PointAnnotation rotation_anchor;
-        private double rotation_angle = 0;
 
         public Ellipse_Wrapper(EllipseAnnotation ellipse, PlotModel model, RectangleAnnotation rectangle = null)
         {
@@ -49,6 +51,33 @@ namespace CrossPlots
             this.model = model;
             this.rectangle = rectangle;
             ellipse_polygon = new PolygonAnnotation();
+        }
+
+        public Ellipse_Wrapper(PlotModel model, RectangleAnnotation rectangle = null)
+        {
+            this.model = model;
+            this.rectangle = rectangle;
+            ellipse_polygon = new PolygonAnnotation();
+        }
+
+        public void InitEllipse(double init_x, double init_y, double width, double height)
+        {
+            ellipse_annotation = new CustomEllipse(init_x, init_y, width, height, model);
+        }
+
+        public void DestroyEllipse()
+        {
+            ellipse_annotation.Destroy();
+
+            if (rectangle != null)
+            {
+                model.Annotations.Remove(rectangle);
+                rectangle = null;
+                DestroyAnchors();
+            }
+
+            ellipse_annotation = null;
+            model.InvalidatePlot(true);
         }
 
         public void CreateRectangleAroundEllipse()
@@ -75,6 +104,7 @@ namespace CrossPlots
             CreateLine();
 
             model.Annotations.Add(rectangle);
+
 
             model.InvalidatePlot(true);
         }
@@ -337,11 +367,13 @@ namespace CrossPlots
             CreateLine();
         }
 
+        // angle in degrees (inside the function gets converted to radians)
         public void RotateObject(double angle)
         {
-            angle = (Math.PI / 180) * angle;
-            var a = Utils.MatrixOperations.CreateFullRotationMatrix(angle, ellipse.X, ellipse.Y);
-            
+            angle = (angle * Math.PI / 180);
+
+            var operationMatrix = Utils.MatrixOperations.CreateFullRotationMatrix(angle, ellipse.X, ellipse.Y);
+
         }
     }
 }

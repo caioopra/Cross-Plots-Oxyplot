@@ -38,7 +38,7 @@ namespace CrossPlots.Utils
             return arr;
         }
 
-        private static double[][] MatrixMultiplication(double[][] matrixA, double[][] matrixB)
+        public static double[][] MatrixMultiplication(double[][] matrixA, double[][] matrixB)
         {
             int m = matrixA.Length;
             int n = matrixA[0].Length;
@@ -57,6 +57,31 @@ namespace CrossPlots.Utils
                         sum += matrixA[i][k] * matrixB[k][j];
                     }
                     result[i][j] = sum;
+                }
+            }
+
+            return result;
+        }
+
+        public static double[] MatrixMultiplication(double[] objectMatrix, double[][] transformationMatrix)
+        {
+            if (
+                objectMatrix.Length != 3 ||
+                transformationMatrix[0].Length != 3 ||
+                transformationMatrix[1].Length != 3 ||
+                transformationMatrix[2].Length != 3
+            )
+            {
+                throw new ArgumentException("Input sizes are incorrect. Vector size must be 3 and matrix size must be 3x3.");
+            }
+
+            double[] result = new double[3];
+
+            for (int i = 0; i < 3; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                {
+                    result[i] += objectMatrix[j] * transformationMatrix[j][i];
                 }
             }
 

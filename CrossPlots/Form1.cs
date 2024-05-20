@@ -3,6 +3,8 @@ using OxyPlot.Annotations;
 using OxyPlot.Series;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace CrossPlots
@@ -55,31 +57,43 @@ namespace CrossPlots
             // Add the plot view to the form
             Controls.Add(plotView);
 
-            //TEST: CREATING ELLIPSE AS POLYGON(WORKING)
+            // TEST BEGIN
+            var vertices = new List<DataPoint>
+            {
+                new DataPoint(10, 20),
+                new DataPoint(20, 20),
+                new DataPoint(20, 10),
+                new DataPoint(10, 10)
+            };
+
             var pol = new PolygonAnnotation
             {
                 Fill = OxyColor.FromAColor(10, OxyColors.Blue),
                 Stroke = OxyColors.Black,
-                StrokeThickness = 1
+                StrokeThickness = 1,
             };
-            double step = 2 * Math.PI / 200;
-            var xCenter = 50;
-            var yCenter = 50;
-            var rotation = (Math.PI / 180) * 90;
-            var majorAxisLen = 15.0;
-            var minorAxisLen = 7.5;
-
-            for (double theta = 0; theta < 2 * Math.PI; theta += step)
-            {
-                //var xx = majorAxisLen * Math.Cos(rotation) * Math.Cos(theta) + minorAxisLen * Math.Sin(rotation) * Math.Sin(theta) + xCenter;
-                //var yy = minorAxisLen * Math.Cos(rotation) * Math.Sin(theta) - majorAxisLen * Math.Sin(rotation) * Math.Cos(theta) + yCenter;
-                var xx = majorAxisLen * Math.Cos(rotation) * Math.Cos(theta) - minorAxisLen * Math.Sin(rotation) * Math.Sin(theta) + xCenter;
-                var yy = minorAxisLen * Math.Cos(rotation) * Math.Sin(theta) + majorAxisLen * Math.Sin(rotation) * Math.Cos(theta) + yCenter;
-                pol.Points.Add(new DataPoint(xx, yy));
-            }
-
+            pol.Points.Add(vertices[0]);
+            pol.Points.Add(vertices[1]);
+            pol.Points.Add(vertices[2]);
+            pol.Points.Add(vertices[3]);
             plotModel.Annotations.Add(pol);
             plotModel.InvalidatePlot(true);
+
+            double asd = (45 * Math.PI) / 180.0;
+            var a = Utils.MatrixOperations.CreateFullRotationMatrix(asd, 15, 15);
+            DataPoint[] result = new DataPoint[4];
+
+            for (int i = 0; i < 4; i++)
+            {
+                var point = Utils.MatrixOperations.MatrixMultiplication(
+                    new double[] { pol.Points[i].X, pol.Points[i].Y, 1 }, a
+                );
+
+                pol.Points[i] = new DataPoint(point[0], point[1]);
+            }
+
+            plotModel.InvalidatePlot(true);
+            // END OF TEST
         }
 
         private void PlotData()
@@ -163,7 +177,6 @@ namespace CrossPlots
                 DestroyEllipse();
             }
 
-            // Create a new ellipse annotation
             ellipseAnnotation = new EllipseAnnotation
             {
                 X = init_x,
@@ -178,21 +191,12 @@ namespace CrossPlots
             (plotView.Model)?.Annotations.Add(ellipseAnnotation);
             ellipse_wrapper = new Ellipse_Wrapper(ellipseAnnotation, plotView.Model);
 
-            plotView.InvalidatePlot(true);  // refresh
+            plotView.InvalidatePlot(true);
         }
 
         private void DestroyEllipse()
         {
-            var model = plotView.Model;
-
-            model.Annotations.Remove(ellipse_wrapper.ellipse);
-            if (ellipse_wrapper.rectangle != null)
-            {
-                model.Annotations.Remove(ellipse_wrapper.rectangle);
-                ellipse_wrapper.DestroyAnchors();
-            }
-
-            model.Annotations.Remove(ellipse_wrapper.ellipse);
+            ellipse_wrapper.DestroyEllipse();
             ellipse_wrapper = null;
 
             plotView.InvalidatePlot(true);
@@ -236,8 +240,17 @@ namespace CrossPlots
 
         private void PlotView_MouseUp(object sender, MouseEventArgs e)
         {
-            // Reset the ellipse annotation once the mouse is released
-            ellipseAnnotation = null;
+            if (ellipseAnnotation != null)
+            {
+                ellipse_wrapper.InitEllipse(
+                ellipseAnnotation.X,
+                ellipseAnnotation.Y,
+                ellipseAnnotation.Width,
+                ellipseAnnotation.Height
+            );
+                // Reset the ellipse annotation once the mouse is released
+                ellipseAnnotation = null;
+            }
 
             if (ellipse_wrapper != null && ellipse_wrapper.editing)
             {
@@ -248,13 +261,16 @@ namespace CrossPlots
 
         private void CtrlUp(object sender, KeyEventArgs e)
         {
-            // Check if the Ctrl key is pressed
-            if (e.KeyCode == Keys.ControlKey)
+            if (e.KeyCode == Keys.ControlKey && ellipseAnnotation != null)
             {
-                // Reset the ellipse annotation once the mouse is released
+                ellipse_wrapper.InitEllipse(
+                     ellipseAnnotation.X,
+                     ellipseAnnotation.Y,
+                     ellipseAnnotation.Width,
+                     ellipseAnnotation.Height
+                 );
                 ellipseAnnotation = null;
             }
-
         }
 
         private void Form1_Load(object sender, EventArgs e)
