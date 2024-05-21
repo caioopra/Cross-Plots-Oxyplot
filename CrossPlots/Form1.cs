@@ -81,7 +81,6 @@ namespace CrossPlots
 
             double asd = (45 * Math.PI) / 180.0;
             var a = Utils.MatrixOperations.CreateFullRotationMatrix(asd, 15, 15);
-            DataPoint[] result = new DataPoint[4];
 
             for (int i = 0; i < 4; i++)
             {
@@ -299,6 +298,7 @@ namespace CrossPlots
         {
             scatterSource.Clear();
             plotView.InvalidatePlot(true);
+            ellipse_wrapper.RotateObject(45);
         }
     }
 }

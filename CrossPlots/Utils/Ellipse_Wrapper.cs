@@ -398,10 +398,24 @@ namespace CrossPlots
         // angle in degrees (inside the function gets converted to radians)
         public void RotateObject(double angle)
         {
-            angle = (angle * Math.PI / 180);
+            angle = angle * Math.PI / 180.0;
 
-            var operationMatrix = Utils.MatrixOperations.CreateFullRotationMatrix(angle, ellipse.X, ellipse.Y);
+            var operationMatrix = MatrixOperations.CreateFullRotationMatrix(
+                    angle, ellipse_annotation.X, ellipse_annotation.Y
+            );
 
+            var AMOUNT_OF_POINTS = ellipse_annotation.annotation.Points.Count;
+            for (int i = 0; i < AMOUNT_OF_POINTS; i++)
+            {
+                var point = MatrixOperations.MatrixMultiplication(
+                    new double[] { ellipse_annotation.annotation.Points[i].X, ellipse_annotation.annotation.Points[i].Y, 1 },
+                    operationMatrix
+                );
+
+                ellipse_annotation.annotation.Points[i] = new DataPoint(point[0], point[1]);
+            }
+
+            model.InvalidatePlot(true);
         }
     }
 }
