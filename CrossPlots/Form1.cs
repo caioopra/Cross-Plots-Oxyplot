@@ -158,13 +158,28 @@ namespace CrossPlots
                 return false;
             }
 
-            var ellipse = ellipse_wrapper.ellipse;
-            if (x >= ellipse.X - ellipse.Width / 2 &&
-                x <= ellipse.X + ellipse.Width / 2 &&
-                y >= ellipse.Y - ellipse.Height / 2 &&
-                y <= ellipse.Y + ellipse.Height / 2)
+            if (ellipse_wrapper.ellipse != null)
             {
-                return true;
+                var ellipse = ellipse_wrapper.ellipse;
+                if (x >= ellipse.X - ellipse.Width / 2 &&
+                    x <= ellipse.X + ellipse.Width / 2 &&
+                    y >= ellipse.Y - ellipse.Height / 2 &&
+                    y <= ellipse.Y + ellipse.Height / 2)
+                {
+                    return true;
+                }
+            }
+
+            if (ellipse_wrapper.ellipse_annotation != null)
+            {
+                var ellipse = ellipse_wrapper.ellipse_annotation;
+                if (x >= ellipse.X - ellipse.Width &&   // in ellipse_annotation, W and H are half of the value
+                    x <= ellipse.X + ellipse.Width &&
+                    y >= ellipse.Y - ellipse.Height &&
+                    y <= ellipse.Y + ellipse.Height)
+                {
+                    return true;
+                }
             }
 
             return false;
@@ -240,36 +255,33 @@ namespace CrossPlots
 
         private void PlotView_MouseUp(object sender, MouseEventArgs e)
         {
-            if (ellipseAnnotation != null)
+            if (ellipseAnnotation != null && ellipse_wrapper.ellipse != null)
             {
-                ellipse_wrapper.InitEllipse(
-                ellipseAnnotation.X,
-                ellipseAnnotation.Y,
-                ellipseAnnotation.Width,
-                ellipseAnnotation.Height
-            );
-                // Reset the ellipse annotation once the mouse is released
-                ellipseAnnotation = null;
-            }
-
-            if (ellipse_wrapper != null && ellipse_wrapper.editing)
-            {
-                ellipse_wrapper.current_anchor = -1;
-                ellipse_wrapper.editing = false;
+                InitializeCustomEllipse();
             }
         }
 
         private void CtrlUp(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.ControlKey && ellipseAnnotation != null)
+            if (e.KeyCode == Keys.ControlKey && ellipseAnnotation != null && ellipse_wrapper.ellipse != null)
             {
-                ellipse_wrapper.InitEllipse(
-                     ellipseAnnotation.X,
-                     ellipseAnnotation.Y,
-                     ellipseAnnotation.Width,
-                     ellipseAnnotation.Height
-                 );
-                ellipseAnnotation = null;
+                InitializeCustomEllipse();
+            }
+        }
+
+        private void InitializeCustomEllipse()
+        {
+            ellipse_wrapper.InitializeCustomEllipse(
+                    ellipseAnnotation.X,
+                    ellipseAnnotation.Y,
+                    ellipseAnnotation.Width,
+                    ellipseAnnotation.Height
+            );
+
+            if (ellipse_wrapper != null && ellipse_wrapper.editing)
+            {
+                ellipse_wrapper.current_anchor = -1;
+                ellipse_wrapper.editing = false;
             }
         }
 

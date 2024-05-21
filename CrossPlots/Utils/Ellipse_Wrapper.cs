@@ -12,10 +12,11 @@ namespace CrossPlots
     {
         public PlotModel model;
 
+        // "ellipse" is just a temporary reference for the ellipse drawing and,
+        // after ellipse_annotation is constructed, it is destroyed
         public EllipseAnnotation ellipse;
-        public PolygonAnnotation ellipse_polygon;
+        public CustomEllipse ellipse_annotation; // main ellipse
         public RectangleAnnotation rectangle;
-        public CustomEllipse ellipse_annotation;
 
         public bool editing = false;
 
@@ -50,24 +51,33 @@ namespace CrossPlots
             this.ellipse = ellipse;
             this.model = model;
             this.rectangle = rectangle;
-            ellipse_polygon = new PolygonAnnotation();
         }
 
         public Ellipse_Wrapper(PlotModel model, RectangleAnnotation rectangle = null)
         {
             this.model = model;
             this.rectangle = rectangle;
-            ellipse_polygon = new PolygonAnnotation();
         }
 
-        public void InitEllipse(double init_x, double init_y, double width, double height)
+        public void InitializeCustomEllipse(double init_x, double init_y, double width, double height)
         {
             ellipse_annotation = new CustomEllipse(init_x, init_y, width, height, model);
+
+            if (ellipse != null)
+            {
+                DestroyEllipseAnnotation();
+            }
         }
 
         public void DestroyEllipse()
         {
+            if (ellipse != null)
+            {
+                DestroyEllipseAnnotation();
+            }
+
             ellipse_annotation.Destroy();
+            ellipse_annotation = null;
 
             if (rectangle != null)
             {
@@ -76,16 +86,24 @@ namespace CrossPlots
                 DestroyAnchors();
             }
 
-            ellipse_annotation = null;
+            model.InvalidatePlot(true);
+        }
+
+        // once the user stops initializing the ellipse shape, starts to use ellipse_annotation (CustomEllipse)
+        void DestroyEllipseAnnotation()
+        {
+            model.Annotations.Remove(ellipse);
+            ellipse = null;
+
             model.InvalidatePlot(true);
         }
 
         public void CreateRectangleAroundEllipse()
         {
-            double left = ellipse.X - ellipse.Width / 2;
-            double top = ellipse.Y + ellipse.Height / 2;
-            double right = ellipse.X + ellipse.Width / 2;
-            double bottom = ellipse.Y - ellipse.Height / 2;
+            double left = ellipse_annotation.X - ellipse_annotation.Width;
+            double top = ellipse_annotation.Y + ellipse_annotation.Height;
+            double right = ellipse_annotation.X + ellipse_annotation.Width;
+            double bottom = ellipse_annotation.Y - ellipse_annotation.Height;
 
             var rectangle = new RectangleAnnotation
             {
