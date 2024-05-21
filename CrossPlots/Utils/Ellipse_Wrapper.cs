@@ -123,7 +123,6 @@ namespace CrossPlots
 
             model.Annotations.Add(rectangle);
 
-
             model.InvalidatePlot(true);
         }
 
@@ -340,39 +339,41 @@ namespace CrossPlots
 
         public void EditEllipse(double x, double y)
         {
-            double centerX = ellipse.X;
-            double centerY = ellipse.Y;
+            double centerX = ellipse_annotation.X;
+            double centerY = ellipse_annotation.Y;
 
             switch ((Anchors)current_anchor)
             {
                 case Anchors.TOP:
                 case Anchors.BOTTOM:
-                    ellipse.Height = Math.Abs(centerY - y) * 2;
+                    ellipse_annotation.Height = Math.Abs(centerY - y);
                     break;
 
                 case Anchors.LEFT:
                 case Anchors.RIGHT:
-                    ellipse.Width = Math.Abs(centerX - x) * 2;
+                    ellipse_annotation.Width = Math.Abs(centerX - x);
                     break;
 
                 case Anchors.TOP_LEFT:
                 case Anchors.TOP_RIGHT:
-                    ellipse.Width = Math.Abs(centerX - x) * 2;
-                    ellipse.Height = Math.Abs(centerY - y) * 2;
+                    ellipse_annotation.Width = Math.Abs(centerX - x);
+                    ellipse_annotation.Height = Math.Abs(centerY - y);
                     break;
 
                 case Anchors.BOTTOM_LEFT:
                 case Anchors.BOTTOM_RIGHT:
-                    ellipse.Width = Math.Abs(centerX - x) * 2;
-                    ellipse.Height = Math.Abs(centerY - y) * 2;
+                    ellipse_annotation.Width = Math.Abs(centerX - x);
+                    ellipse_annotation.Height = Math.Abs(centerY - y);
                     break;
             }
 
+            UpdateCustomEllipse();
+
             // updating rectangle annotation
-            double left = ellipse.X - ellipse.Width / 2;
-            double top = ellipse.Y + ellipse.Height / 2;
-            double right = ellipse.X + ellipse.Width / 2;
-            double bottom = ellipse.Y - ellipse.Height / 2;
+            double left = ellipse_annotation.X - ellipse_annotation.Width;
+            double top = ellipse_annotation.Y + ellipse_annotation.Height;
+            double right = ellipse_annotation.X + ellipse_annotation.Width;
+            double bottom = ellipse_annotation.Y - ellipse_annotation.Height;
 
             rectangle.MinimumX = left;
             rectangle.MaximumX = right;
@@ -383,6 +384,15 @@ namespace CrossPlots
             DestroyAnchors();
             CreateAnchors(left, top, right, bottom);
             CreateLine();
+        }
+
+        void UpdateCustomEllipse()
+        {
+            ellipse_annotation.Destroy();
+
+            ellipse_annotation.UpdateAnnotation();
+
+            ellipse_annotation.DrawEllipse();
         }
 
         // angle in degrees (inside the function gets converted to radians)

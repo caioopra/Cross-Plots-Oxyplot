@@ -255,9 +255,15 @@ namespace CrossPlots
 
         private void PlotView_MouseUp(object sender, MouseEventArgs e)
         {
-            if (ellipseAnnotation != null && ellipse_wrapper.ellipse != null)
+            if (ellipseAnnotation != null && ellipse_wrapper?.ellipse != null)
             {
                 InitializeCustomEllipse();
+            }
+
+            if (ellipse_wrapper != null && ellipse_wrapper.editing)
+            {
+                ellipse_wrapper.current_anchor = -1;
+                ellipse_wrapper.editing = false;
             }
         }
 
@@ -277,12 +283,6 @@ namespace CrossPlots
                     ellipseAnnotation.Width,
                     ellipseAnnotation.Height
             );
-
-            if (ellipse_wrapper != null && ellipse_wrapper.editing)
-            {
-                ellipse_wrapper.current_anchor = -1;
-                ellipse_wrapper.editing = false;
-            }
         }
 
         private void Form1_Load(object sender, EventArgs e)

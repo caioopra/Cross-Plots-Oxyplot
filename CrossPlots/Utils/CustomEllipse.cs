@@ -31,7 +31,7 @@ namespace CrossPlots.Utils
 
         const double step = 2 * Math.PI / 200;
 
-        private PolygonAnnotation annotation;
+        public PolygonAnnotation annotation;
 
         public CustomEllipse(double xCenter, double yCenter, double width, double height, PlotModel plotModel)
         {
@@ -64,6 +64,18 @@ namespace CrossPlots.Utils
             model.InvalidatePlot(true);
         }
 
+        public void UpdateAnnotation()
+        {
+            annotation = new PolygonAnnotation
+            {
+                Fill = OxyColor.FromAColor(10, OxyColors.Blue),
+                Stroke = OxyColors.Black,
+                StrokeThickness = 1,
+            };
+            model.Annotations.Add(annotation);
+            DrawEllipse();
+        }
+
         public void Destroy()
         {
             for (int i = 0; i < annotation.Points.Count; i++)
@@ -74,6 +86,8 @@ namespace CrossPlots.Utils
             model.Annotations.Remove(annotation);
 
             annotation = null;
+
+            model.InvalidatePlot(true);
         }
     }
 }
