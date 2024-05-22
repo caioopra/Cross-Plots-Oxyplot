@@ -3,8 +3,6 @@ using OxyPlot.Annotations;
 using OxyPlot.Series;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace CrossPlots
@@ -13,15 +11,12 @@ namespace CrossPlots
     {
         double init_x;
         double init_y;
-        double fin_x;
-        double fin_y;
 
-        private EllipseAnnotation ellipseAnnotation;
+        private PolygonAnnotation annotation = null;
+        private bool editing = false;
 
         private ScatterSeries scatterSeries;
         private List<ScatterPoint> scatterSource = new List<ScatterPoint>();
-
-        private Ellipse_Wrapper ellipse_wrapper;
 
         Random rnd = new Random();
 
@@ -50,49 +45,12 @@ namespace CrossPlots
 
             // Subscribe to mouse events for interactivity
             plotView.MouseDown += PlotView_MouseDown;
-            plotView.MouseUp += PlotView_MouseUp;
-            plotView.MouseMove += PlotView_MouseMove;
             plotView.KeyUp += CtrlUp;
 
             // Add the plot view to the form
             Controls.Add(plotView);
 
-            // TEST BEGIN
-            var vertices = new List<DataPoint>
-            {
-                new DataPoint(10, 20),
-                new DataPoint(20, 20),
-                new DataPoint(20, 10),
-                new DataPoint(10, 10)
-            };
-
-            var pol = new PolygonAnnotation
-            {
-                Fill = OxyColor.FromAColor(10, OxyColors.Blue),
-                Stroke = OxyColors.Black,
-                StrokeThickness = 1,
-            };
-            pol.Points.Add(vertices[0]);
-            pol.Points.Add(vertices[1]);
-            pol.Points.Add(vertices[2]);
-            pol.Points.Add(vertices[3]);
-            plotModel.Annotations.Add(pol);
             plotModel.InvalidatePlot(true);
-
-            double asd = (45 * Math.PI) / 180.0;
-            var a = Utils.MatrixOperations.CreateFullRotationMatrix(asd, 15, 15);
-
-            for (int i = 0; i < 4; i++)
-            {
-                var point = Utils.MatrixOperations.MatrixMultiplication(
-                    new double[] { pol.Points[i].X, pol.Points[i].Y, 1 }, a
-                );
-
-                pol.Points[i] = new DataPoint(point[0], point[1]);
-            }
-
-            plotModel.InvalidatePlot(true);
-            // END OF TEST
         }
 
         private void PlotData()
@@ -116,173 +74,71 @@ namespace CrossPlots
             init_x = plotView.Model?.Axes[0].InverseTransform(e.X) ?? 0;
             init_y = plotView.Model?.Axes[1].InverseTransform(e.Y) ?? 0;
 
-            // null if didn't clicked inside the ellipse
-            var clicked_inside_ellipse = IsMouseInsideEllipseAnnotation(init_x, init_y);
-
-            if (clicked_inside_ellipse && e.Button == MouseButtons.Right)
+            if (e.Button == MouseButtons.Right)
             {
-                DestroyEllipse();
+                // TODO: function to destroy annotation
                 return;
             }
 
             // must be holding "CRTL" key to create
             if (ModifierKeys == Keys.Control)
             {
-                if (!clicked_inside_ellipse)
+                if (!editing)
                 {
-                    CreateEllipse(init_x, init_y);
+                    CreatePolygon(init_x, init_y);
                 }
-            }
-
-            if (ellipse_wrapper != null && ellipse_wrapper.rectangle != null)
-            {
-                ellipse_wrapper.ClickedInAnchor(init_x, init_y);
-
-                if (ellipse_wrapper.current_anchor >= 0)
+                else
                 {
-                    ellipse_wrapper.editing = true;  // todo: do it inside Ellipse_Wrapper
+                    AddPoint(init_x, init_y);
                 }
-            }
-
-            if (clicked_inside_ellipse && e.Button == MouseButtons.Left && ellipse_wrapper.rectangle is null)
-            {
-                ellipse_wrapper.CreateRectangleAroundEllipse();
             }
         }
 
-        private bool IsMouseInsideEllipseAnnotation(double x, double y)
+        // TODO: implement
+        private void CreatePolygon(double x, double y)
         {
-            if (ellipse_wrapper is null)
-            {
-                return false;
-            }
+            editing = true;
 
-            if (ellipse_wrapper.ellipse != null)
+            annotation = new PolygonAnnotation
             {
-                var ellipse = ellipse_wrapper.ellipse;
-                if (x >= ellipse.X - ellipse.Width / 2 &&
-                    x <= ellipse.X + ellipse.Width / 2 &&
-                    y >= ellipse.Y - ellipse.Height / 2 &&
-                    y <= ellipse.Y + ellipse.Height / 2)
-                {
-                    return true;
-                }
-            }
-
-            if (ellipse_wrapper.ellipse_annotation != null)
-            {
-                var ellipse = ellipse_wrapper.ellipse_annotation;
-                if (x >= ellipse.X - ellipse.Width &&   // in ellipse_annotation, W and H are half of the value
-                    x <= ellipse.X + ellipse.Width &&
-                    y >= ellipse.Y - ellipse.Height &&
-                    y <= ellipse.Y + ellipse.Height)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private void CreateEllipse(double init_x, double init_y)
-        {
-            if (ellipse_wrapper != null)
-            {
-                DestroyEllipse();
-            }
-
-            ellipseAnnotation = new EllipseAnnotation
-            {
-                X = init_x,
-                Y = init_y,
-                Width = 0,
-                Height = 0,
                 Fill = OxyColor.FromAColor(10, OxyColors.Blue),
                 Stroke = OxyColors.Black,
-                StrokeThickness = 1
+                StrokeThickness = 1,
             };
 
-            (plotView.Model)?.Annotations.Add(ellipseAnnotation);
-            ellipse_wrapper = new Ellipse_Wrapper(ellipseAnnotation, plotView.Model);
+            plotView.Model.Annotations.Add(annotation);
 
-            plotView.InvalidatePlot(true);
+            AddPoint(x, y);
         }
 
-        private void DestroyEllipse()
+        // TODO: implement
+        private void AddPoint(double x, double y)
         {
-            ellipse_wrapper.DestroyEllipse();
-            ellipse_wrapper = null;
+            annotation.Points.Add(new DataPoint(x, y));
 
-            plotView.InvalidatePlot(true);
+            plotView.Model.Annotations.Add(new PointAnnotation
+            {
+                X = x,
+                Y = y,
+                Fill = OxyColors.Black,
+                Size = 3
+            });
+
+            UpdateWindow();
         }
 
-        private void PlotView_MouseMove(object sender, MouseEventArgs e)
+        private void UpdateWindow()
         {
-            if (!(ellipse_wrapper is null) && ellipse_wrapper.editing)
-            {
-                ellipse_wrapper.EditEllipse(
-                    plotView.Model?.Axes[0].InverseTransform(e.X) ?? 0,
-                    plotView.Model?.Axes[1].InverseTransform(e.Y) ?? 0
-                );
-                plotView.InvalidatePlot(true);
-
-                return;
-            }
-
-            if (ModifierKeys == Keys.Control)
-            {
-                if (ellipseAnnotation != null)
-                {
-                    fin_x = plotView.Model?.Axes[0].InverseTransform(e.X) ?? 0;
-                    fin_y = plotView.Model?.Axes[1].InverseTransform(e.Y) ?? 0;
-
-                    double x = init_x + ((fin_x - init_x) / 2);
-                    double y = init_y + ((fin_y - init_y) / 2);
-
-                    // Update the width and height of the ellipse based on the mouse movement
-                    ellipseAnnotation.Width = Math.Abs(fin_x - init_x);
-                    ellipseAnnotation.Height = Math.Abs(fin_y - init_y);
-                    ellipseAnnotation.X = x;
-                    ellipseAnnotation.Y = y;
-
-                    // Refresh the plot view
-                    plotView.InvalidatePlot(true);
-                }
-                return;
-            }
+            plotView.Model.InvalidatePlot(true);
         }
 
-        private void PlotView_MouseUp(object sender, MouseEventArgs e)
-        {
-            if (ellipseAnnotation != null && ellipse_wrapper?.ellipse != null)
-            {
-                InitializeCustomEllipse();
-            }
-
-            if (ellipse_wrapper != null && ellipse_wrapper.editing)
-            {
-                ellipse_wrapper.current_anchor = -1;
-                ellipse_wrapper.editing = false;
-            }
-        }
-
+        // TODO: implement
         private void CtrlUp(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.ControlKey && ellipseAnnotation != null && ellipse_wrapper.ellipse != null)
-            {
-                InitializeCustomEllipse();
-            }
+            editing = false;
+            // paint the points inside of the current polygon
         }
 
-        private void InitializeCustomEllipse()
-        {
-            ellipse_wrapper.InitializeCustomEllipse(
-                    ellipseAnnotation.X,
-                    ellipseAnnotation.Y,
-                    ellipseAnnotation.Width,
-                    ellipseAnnotation.Height
-            );
-        }
 
         private void Form1_Load(object sender, EventArgs e)
         {
@@ -298,7 +154,6 @@ namespace CrossPlots
         {
             scatterSource.Clear();
             plotView.InvalidatePlot(true);
-            ellipse_wrapper.RotateObject(45);
         }
     }
 }
