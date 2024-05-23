@@ -3,6 +3,7 @@ using OxyPlot.Annotations;
 using OxyPlot.Series;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace CrossPlots
@@ -11,8 +12,6 @@ namespace CrossPlots
     {
         double init_x;
         double init_y;
-
-        double rightmost_point = int.MinValue;
 
         private PolygonAnnotation annotation = null;
         private bool annotation_created = false;
@@ -122,7 +121,11 @@ namespace CrossPlots
             });
 
             UpdateWindow();
-            UpdateRightmostPoint(x);
+
+            if (annotation.Points.Count > 2)
+            {
+                VerifyPointsInPolygon();
+            }
         }
 
         private void UpdateWindow()
@@ -130,30 +133,56 @@ namespace CrossPlots
             plotView.Model.InvalidatePlot(true);
         }
 
-        private void UpdateRightmostPoint(double x)
+        private void VerifyPointsInPolygon()
         {
-            if (x > rightmost_point)
+            scatterSource.RemoveAll(point =>
             {
-                rightmost_point = x;
+                var dataPoint = new DataPoint(point.X, point.Y);
+                return IsPointInPolygon(dataPoint);
+            });
+
+            UpdateWindow();
+        }
+
+        private bool IsPointInPolygon(DataPoint point)
+        {
+            if (annotation == null || annotation.Points.Count < 3)
+            {
+                return false;
             }
+
+            var polygonPoints = annotation.Points.ToList();
+            bool inside = false;
+            int j = polygonPoints.Count - 1;
+
+            for (int i = 0; i < polygonPoints.Count; j = i++)
+            {
+                if ((polygonPoints[i].Y > point.Y) != (polygonPoints[j].Y > point.Y) &&
+                    point.X < (polygonPoints[j].X - polygonPoints[i].X) *
+                              (point.Y - polygonPoints[i].Y) /
+                              (polygonPoints[j].Y - polygonPoints[i].Y) + polygonPoints[i].X)
+                {
+                    inside = !inside;
+                }
+            }
+            return inside;
         }
 
         private void DeleteAnnotation()
         {
 
-            if(!annotation_created)
+            if (!annotation_created)
             {
                 return;
             }
 
             annotation_created = false;
-            rightmost_point = int.MinValue;
 
             plotView.Model.Annotations.Remove(annotation);
             annotation = null;
 
             plotView.Model.Annotations.Clear();
-            
+
             UpdateWindow();
         }
 
