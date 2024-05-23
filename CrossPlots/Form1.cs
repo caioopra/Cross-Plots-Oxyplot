@@ -15,7 +15,7 @@ namespace CrossPlots
         double rightmost_point = int.MinValue;
 
         private PolygonAnnotation annotation = null;
-        private bool editing = false;
+        private bool annotation_created = false;
 
         private ScatterSeries scatterSeries;
         private List<ScatterPoint> scatterSource = new List<ScatterPoint>();
@@ -26,7 +26,6 @@ namespace CrossPlots
         {
             InitializeComponent();
             InitializePlot();
-
         }
 
         private void InitializePlot()
@@ -45,9 +44,7 @@ namespace CrossPlots
             // Assign the plot model to the plot view
             plotView.Model = plotModel;
 
-            // Subscribe to mouse events for interactivity
             plotView.MouseDown += PlotView_MouseDown;
-            plotView.KeyUp += CtrlUp;
 
             // Add the plot view to the form
             Controls.Add(plotView);
@@ -78,14 +75,14 @@ namespace CrossPlots
 
             if (e.Button == MouseButtons.Right)
             {
-                // TODO: function to destroy annotation
+                DeleteAnnotation();
                 return;
             }
 
             // must be holding "CRTL" key to create
             if (ModifierKeys == Keys.Control)
             {
-                if (!editing)
+                if (!annotation_created)
                 {
                     CreatePolygon(init_x, init_y);
                 }
@@ -96,10 +93,9 @@ namespace CrossPlots
             }
         }
 
-        // TODO: implement
         private void CreatePolygon(double x, double y)
         {
-            editing = true;
+            annotation_created = true;
 
             annotation = new PolygonAnnotation
             {
@@ -142,18 +138,27 @@ namespace CrossPlots
             }
         }
 
-        // TODO: implement
-        private void CtrlUp(object sender, KeyEventArgs e)
+        private void DeleteAnnotation()
         {
-            editing = false;
-            // paint the points inside of the current polygon
+
+            if(!annotation_created)
+            {
+                return;
+            }
+
+            annotation_created = false;
+            rightmost_point = int.MinValue;
+
+            plotView.Model.Annotations.Remove(annotation);
+            annotation = null;
+
+            plotView.Model.Annotations.Clear();
+            
+            UpdateWindow();
         }
 
 
-        private void Form1_Load(object sender, EventArgs e)
-        {
-
-        }
+        private void Form1_Load(object sender, EventArgs e) { }
 
         private void plotBtn_Click(object sender, EventArgs e)
         {
