@@ -12,6 +12,8 @@ namespace CrossPlots
         double init_x;
         double init_y;
 
+        double rightmost_point = int.MinValue;
+
         private PolygonAnnotation annotation = null;
         private bool editing = false;
 
@@ -111,7 +113,6 @@ namespace CrossPlots
             AddPoint(x, y);
         }
 
-        // TODO: implement
         private void AddPoint(double x, double y)
         {
             annotation.Points.Add(new DataPoint(x, y));
@@ -125,11 +126,20 @@ namespace CrossPlots
             });
 
             UpdateWindow();
+            UpdateRightmostPoint(x);
         }
 
         private void UpdateWindow()
         {
             plotView.Model.InvalidatePlot(true);
+        }
+
+        private void UpdateRightmostPoint(double x)
+        {
+            if (x > rightmost_point)
+            {
+                rightmost_point = x;
+            }
         }
 
         // TODO: implement
