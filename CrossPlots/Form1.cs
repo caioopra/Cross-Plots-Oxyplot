@@ -150,43 +150,19 @@ namespace CrossPlots
             scatterSource.RemoveAll(point =>
             {
                 var dataPoint = new DataPoint(point.X, point.Y);
-                var pointInPolygon = IsPointInPolygon(dataPoint);
+                var pointInPolygon = IsPointInPolygon(point.X, point.Y);
 
                 if (pointInPolygon)
                 {
                     indexes.Add(scatterSource.IndexOf(point));
                 }
 
-                return IsPointInPolygon(dataPoint);
+                return pointInPolygon;
             });
 
             UpdateWindow();
 
             return indexes;
-        }
-
-        private bool IsPointInPolygon(DataPoint point)
-        {
-            if (annotation == null || annotation.Points.Count < 3)
-            {
-                return false;
-            }
-
-            var polygonPoints = annotation.Points.ToList();
-            bool inside = false;
-            int j = polygonPoints.Count - 1;
-
-            for (int i = 0; i < polygonPoints.Count; j = i++)
-            {
-                if ((polygonPoints[i].Y > point.Y) != (polygonPoints[j].Y > point.Y) &&
-                    point.X < (polygonPoints[j].X - polygonPoints[i].X) *
-                              (point.Y - polygonPoints[i].Y) /
-                              (polygonPoints[j].Y - polygonPoints[i].Y) + polygonPoints[i].X)
-                {
-                    inside = !inside;
-                }
-            }
-            return inside;
         }
 
         private bool IsPointInPolygon(double x, double y)
