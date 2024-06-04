@@ -74,7 +74,7 @@ namespace CrossPlots
 
             if (e.Button == MouseButtons.Right)
             {
-                DeleteAnnotation();
+                HandlePointsDeletion();
                 return;
             }
 
@@ -121,16 +121,21 @@ namespace CrossPlots
             });
 
             UpdateWindow();
-
-            if (annotation.Points.Count > 2)
-            {
-                VerifyPointsInPolygon();
-            }
         }
 
         private void UpdateWindow()
         {
             plotView.Model.InvalidatePlot(true);
+        }
+
+        public void HandlePointsDeletion()
+        {
+            if (annotation != null && annotation.Points.Count > 2)
+            {
+                VerifyPointsInPolygon();
+            }
+
+            DeleteAnnotation();
         }
 
         private void VerifyPointsInPolygon()
