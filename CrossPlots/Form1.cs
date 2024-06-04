@@ -132,21 +132,36 @@ namespace CrossPlots
         {
             if (annotation != null && annotation.Points.Count > 2)
             {
-                VerifyPointsInPolygon();
+                List<int> erased_indexes = ErasePointsInsidePolygon();
             }
 
             DeleteAnnotation();
         }
 
-        private void VerifyPointsInPolygon()
+        /// <summary>
+        /// Erase the points inside the polygon and returns the index of the ones that were removed
+        /// </summary>
+        /// <returns>List of the indexes of the points removed</returns>
+        private List<int> ErasePointsInsidePolygon()
         {
+            List<int> indexes = new List<int>();
+
             scatterSource.RemoveAll(point =>
             {
                 var dataPoint = new DataPoint(point.X, point.Y);
+                var pointInPolygon = IsPointInPolygon(dataPoint);
+
+                if (pointInPolygon)
+                {
+                    indexes.Add(scatterSource.IndexOf(point));
+                }
+
                 return IsPointInPolygon(dataPoint);
             });
 
             UpdateWindow();
+
+            return indexes;
         }
 
         private bool IsPointInPolygon(DataPoint point)
