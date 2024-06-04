@@ -3,6 +3,7 @@ using OxyPlot.Annotations;
 using OxyPlot.Series;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -72,7 +73,7 @@ namespace CrossPlots
             init_x = plotView.Model?.Axes[0].InverseTransform(e.X) ?? 0;
             init_y = plotView.Model?.Axes[1].InverseTransform(e.Y) ?? 0;
 
-            if (e.Button == MouseButtons.Right)
+            if (e.Button == MouseButtons.Right && IsPointInPolygon(init_x, init_y))
             {
                 HandlePointsDeletion();
                 return;
@@ -181,6 +182,30 @@ namespace CrossPlots
                     point.X < (polygonPoints[j].X - polygonPoints[i].X) *
                               (point.Y - polygonPoints[i].Y) /
                               (polygonPoints[j].Y - polygonPoints[i].Y) + polygonPoints[i].X)
+                {
+                    inside = !inside;
+                }
+            }
+            return inside;
+        }
+
+        private bool IsPointInPolygon(double x, double y)
+        {
+            if (annotation == null || annotation.Points.Count < 3)
+            {
+                return false;
+            }
+
+            var polygonPoints = annotation.Points.ToList();
+            bool inside = false;
+            int j = polygonPoints.Count - 1;
+
+            for (int i = 0; i < polygonPoints.Count; j = i++)
+            {
+                if ((polygonPoints[i].Y > y) != (polygonPoints[j].Y > y) &&
+                    x < (polygonPoints[j].X - polygonPoints[i].X) *
+                        (y - polygonPoints[i].Y) /
+                        (polygonPoints[j].Y - polygonPoints[i].Y) + polygonPoints[i].X)
                 {
                     inside = !inside;
                 }
